@@ -375,29 +375,45 @@ pub fn fmperm_safe(
             }
         }
     } else {
-        let mut visited = vec![false; vertex_count as usize];
-        for vertex_index in 0..vertex_count as usize {
-            let mapped_vertex = permutation[vertex_index] as usize;
-            if mapped_vertex == vertex_index {
-                fixed_points[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
-                min_cycle_representatives[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
-            } else if !visited[vertex_index] {
-                let mut cycle_cursor = vertex_index;
-                loop {
-                    visited[cycle_cursor] = true;
-                    cycle_cursor = permutation[cycle_cursor] as usize;
-                    if cycle_cursor == vertex_index {
-                        break;
-                    }
-                }
-                min_cycle_representatives[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
+        // n > 64 needs a visited array.  It is kept in a thread-local scratch
+        // buffer that grows monotonically, so repeated canonicalizations do not
+        // allocate: this routine runs once per automorphism found, which for
+        // highly symmetric graphs is many times per `canonize` call.
+        CYCLE_VISITED_SCRATCH.with_borrow_mut(|visited| {
+            if visited.len() < vertex_count as usize {
+                visited.resize(vertex_count as usize, false);
             }
-        }
+            visited[..vertex_count as usize].fill(false);
+
+            for vertex_index in 0..vertex_count as usize {
+                let mapped_vertex = permutation[vertex_index] as usize;
+                if mapped_vertex == vertex_index {
+                    fixed_points[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
+                    min_cycle_representatives[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
+                } else if !visited[vertex_index] {
+                    let mut cycle_cursor = vertex_index;
+                    loop {
+                        visited[cycle_cursor] = true;
+                        cycle_cursor = permutation[cycle_cursor] as usize;
+                        if cycle_cursor == vertex_index {
+                            break;
+                        }
+                    }
+                    min_cycle_representatives[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
+                }
+            }
+        });
     }
 }
 
+thread_local! {
+    /// Visited-marker scratch for [`fmperm_safe`]'s `n > 64` path.
+    static CYCLE_VISITED_SCRATCH: std::cell::RefCell<Vec<bool>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
 /// Compute (fixed_points, min_cycle_representatives) from partition at the given level.
-/// SAFETY: lab[vertex_index] < vertex_count ≤ word_count*64, partition has a sentinel ≤ level before index vertex_count,
+/// SAFETY: `lab[vertex_index] < vertex_count ≤ word_count*64`, partition has a sentinel ≤ level before index `vertex_count`,
 ///         so inner loops terminate before vertex_index=vertex_count; fixed_points/min_cycle_representatives have word_count words.
 #[inline]
 pub fn mark_partition_fixed_points(
