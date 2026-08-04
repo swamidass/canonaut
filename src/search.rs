@@ -1211,7 +1211,7 @@ fn processnode(
             stats_ptr.number_of_orbits =
                 safe_orbjoin(orbits_slice, workperm_slice, context.number_of_vertices);
             if stats_ptr.number_of_orbits as i32 == prior_orbit_count {
-                if context.gca_canonical_level != context.gca_canonical_level as i32 {
+                if context.gca_canonical_level != context.gca_first_level as i32 {
                     context.needs_short_prune = true;
                 }
                 return context.gca_canonical_level;
@@ -1239,12 +1239,12 @@ fn processnode(
             if context.use_schreier_sims {
                 context
                     .schreiersims
-                    .add_generator(unsafe { std::mem::transmute(context.work_permutation.as_slice()) });
+                    .add_generator(context.work_permutation.as_slice());
             }
             if orbits[context.coset_vertex as usize] < context.coset_vertex {
-                return context.gca_canonical_level as i32;
+                return context.gca_canonical_level;
             }
-            if context.gca_canonical_level != context.gca_canonical_level as i32 {
+            if context.gca_canonical_level != context.gca_first_level as i32 {
                 context.needs_short_prune = true;
             }
             return context.gca_canonical_level;

@@ -54,7 +54,7 @@ impl SchreierArenaContext {
     /// Passing `0` resets to the default (`10`).
     pub fn set_schreier_fails(&mut self, number_of_fails: u32) -> u32 {
         let previous_max = self.maximum_schreier_failures;
-        if number_of_fails <= 0 {
+        if number_of_fails == 0 {
             self.maximum_schreier_failures = DEFAULT_SCHREIERFAILS;
         } else {
             self.maximum_schreier_failures = number_of_fails;
