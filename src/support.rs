@@ -133,42 +133,6 @@ pub fn int_to_string(integer: u32, s: &mut String) {
     s.push_str(&int_str);
 }
 
-pub unsafe fn itos(mut integer: i32, s: &mut [u8]) -> u32 {
-    let mut current_digit: i32;
-    let mut reverse_start_index: i32;
-    let mut digit_write_index: i32;
-    let mut swap_byte: u8;
-    let digit_count: u32;
-    if integer < 0 {
-        digit_write_index = 0;
-        integer = -integer;
-        reverse_start_index = 1;
-        s[0] = '-' as u32 as u8;
-    } else {
-        digit_write_index = -(1);
-        reverse_start_index = 0;
-    }
-    loop {
-        current_digit = integer % 10;
-        integer /= 10;
-        digit_write_index += 1;
-        s[digit_write_index as usize] = (current_digit + '0' as i32) as u8;
-        if integer == 0 {
-            break;
-        }
-    }
-    s[(digit_write_index + 1) as usize] = '\0' as u32 as u8;
-    digit_count = (digit_write_index + 1) as u32;
-    while reverse_start_index < digit_write_index {
-        swap_byte = s[reverse_start_index as usize];
-        s[reverse_start_index as usize] = s[digit_write_index as usize];
-        s[digit_write_index as usize] = swap_byte;
-        reverse_start_index += 1;
-        digit_write_index -= 1;
-    }
-    digit_count
-}
-
 /// Computes the orbit decomposition (connected components) of a permutation defined by `permutation`.
 ///
 /// `orbits` is an output buffer. After execution, `orbits[i]` will contain the
@@ -223,119 +187,6 @@ pub fn compute_orbits(orbits: &mut [u32], permutation: &[u32], vertex_count: u32
     }
 
     orbit_count
-}
-
-pub unsafe fn writeperm(
-    output: &mut OutputStream,
-    permutation: &[u32],
-    cartesian: bool,
-    linelength: u32,
-    vertex_count: u32,
-    graph_context: &mut GraphContext,
-) {
-    let mut curlen: u32 = 0;
-    let mut _s = String::with_capacity(30);
-
-    if cartesian {
-        for vertex_index in 0..vertex_count {
-            let labeled_value = permutation[vertex_index as usize] + labelorg();
-            let value_string = labeled_value.to_string();
-            let value_string_len = value_string.len() as u32;
-            if linelength > 0 && curlen + value_string_len + 1 > linelength {
-                let _ = output.write(b"\n   ");
-                curlen = 3;
-            }
-            let _ = output.write(b" ");
-            let _ = output.write(value_string.as_bytes());
-            curlen += value_string_len + 1;
-        }
-        let _ = output.write(b"\n");
-    } else {
-        for vertex_index in 0..vertex_count {
-            graph_context.work_permutation[vertex_index as usize] = 0;
-        }
-        let mut any_cycles = false;
-        for vertex_index in 0..vertex_count {
-            if graph_context.work_permutation[vertex_index as usize] == 0
-                && permutation[vertex_index as usize] != vertex_index
-            {
-                let mut cycle_current_vertex = vertex_index;
-                let mut value_string = (cycle_current_vertex + labelorg()).to_string();
-                let mut value_string_len = value_string.len() as u32;
-                if curlen > 3 && linelength > 0 && curlen + 2 * value_string_len + 4 > linelength {
-                    let _ = output.write(b"\n   ");
-                    curlen = 3;
-                }
-                let _ = output.write(b"(");
-                any_cycles = true;
-                loop {
-                    let _ = output.write(value_string.as_bytes());
-                    curlen += value_string_len + 1;
-                    let cycle_previous_vertex = cycle_current_vertex;
-                    cycle_current_vertex = permutation[cycle_current_vertex as usize];
-                    graph_context.work_permutation[cycle_previous_vertex as usize] = 1;
-                    if cycle_current_vertex != vertex_index {
-                        value_string = (cycle_current_vertex + labelorg()).to_string();
-                        value_string_len = value_string.len() as u32;
-                        if linelength > 0 && curlen + value_string_len + 2 > linelength {
-                            let _ = output.write(b"\n   ");
-                            curlen = 3;
-                        }
-                        let _ = output.write(b" ");
-                    } else {
-                        break;
-                    }
-                }
-                let _ = output.write(b")");
-                curlen += 1;
-            }
-        }
-        if !any_cycles {
-            let _ = output.write(b"(1)\n");
-        } else {
-            let _ = output.write(b"\n");
-        }
-    }
-}
-
-pub unsafe fn fmperm(
-    permutation: &[u32],
-    fixed_points: &mut [usize],
-    min_cycle_representatives: &mut [usize],
-    words_per_vertex: u32,
-    vertex_count: u32,
-    graph_context: &mut GraphContext,
-) {
-    let mut vertex_index: u32;
-    let mut cycle_previous_vertex: u32;
-    let mut cycle_current_vertex: u32;
-    if vertex_count as usize > graph_context.work_permutation.len() {
-        graph_context.work_permutation.resize(vertex_count as usize, 0);
-    }
-    fixed_points[..words_per_vertex as usize].fill(0);
-    min_cycle_representatives[..words_per_vertex as usize].fill(0);
-    graph_context.work_permutation[..(vertex_count as usize)].fill(0);
-    vertex_index = 0;
-    while vertex_index < vertex_count {
-        if permutation[vertex_index as usize] == vertex_index {
-            fixed_points[(vertex_index >> 6) as usize] |= BIT_USIZE[(vertex_index & 0x3f_u32) as usize];
-            min_cycle_representatives[(vertex_index >> 6) as usize] |=
-                BIT_USIZE[(vertex_index & 0x3f_u32) as usize];
-        } else if graph_context.work_permutation[vertex_index as usize] == 0 {
-            cycle_current_vertex = vertex_index;
-            loop {
-                cycle_previous_vertex = cycle_current_vertex;
-                cycle_current_vertex = permutation[cycle_current_vertex as usize];
-                graph_context.work_permutation[cycle_previous_vertex as usize] = 1;
-                if cycle_current_vertex == vertex_index {
-                    break;
-                }
-            }
-            min_cycle_representatives[(vertex_index >> 6) as usize] |=
-                BIT_USIZE[(vertex_index & 0x3f_u32) as usize];
-        }
-        vertex_index += 1;
-    }
 }
 
 /// Equivalent of C's fmperm(): compute (fixed_points, min_cycle_representatives) from a permutation.
@@ -733,10 +584,6 @@ pub fn prune_by_generators(
         }
     }
 }
-fn print_error(message: &str) {
-    eprintln!("Error: {message}");
-}
-
 fn write_formatted(output: &mut OutputStream, format: &'static str, args: &[&dyn std::fmt::Display]) {
     let formatted = match format {
         "{:.0}" => format!("{:.0}", args[0]),
@@ -758,18 +605,15 @@ pub fn writegroupsize(output: &mut OutputStream, group_size_mantissa: f64, group
     }
 }
 
+/// Guards against a caller built against a different word size or a different
+/// nauty version than this port targets (nauty's `nauty_check`).
 pub fn check_build_consistency(wordsize: u32, version: u32) {
     if wordsize != WORDSIZE {
-        eprintln!("WORDSIZE mismatch in support.c");
+        eprintln!("canonaut: word-size mismatch (built for {WORDSIZE}, called with {wordsize})");
     }
     if version != 28090 {
-        eprintln!("support.c version mismatch");
+        eprintln!("canonaut: version mismatch (this port targets nauty 2.8.9)");
     }
-}
-
-pub unsafe fn alloc_error(message: &str) {
-    print_error(&format!("Dynamic allocation failed: {}", message));
-    std::process::exit(1);
 }
 
 #[cfg(test)]

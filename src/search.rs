@@ -1188,9 +1188,9 @@ fn processnode(
             if context.use_schreier_sims {
                 context
                     .schreiersims
-                    .add_generator(unsafe { std::mem::transmute(context.work_permutation.as_slice()) });
+                    .add_generator(context.work_permutation.as_slice());
             }
-            return context.gca_canonical_level as i32;
+            return context.gca_canonical_level;
         }
         2 => {
             if context.free_memory_pointer == context.workspace_top {
