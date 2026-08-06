@@ -127,6 +127,29 @@ impl DenseGraph {
         self.directed
     }
 
+    /// Number of vertices.
+    pub fn number_of_vertices(&self) -> usize {
+        self.number_of_vertices as usize
+    }
+
+    /// True if the edge `vertex1 → vertex2` is present.
+    ///
+    /// For an undirected graph the adjacency matrix is symmetric, so argument
+    /// order does not matter; for a digraph this asks specifically about the
+    /// arc from `vertex1` to `vertex2`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if either vertex is out of range.
+    pub fn has_edge(&self, vertex1: usize, vertex2: usize) -> bool {
+        assert!(
+            vertex1 < self.number_of_vertices as usize && vertex2 < self.number_of_vertices as usize,
+            "vertex out of range: has_edge({vertex1}, {vertex2}) on a graph with {} vertices",
+            self.number_of_vertices
+        );
+        get_graph_row(&self.adjacency, vertex1, self.words_per_vertex).is_bit_set(vertex2)
+    }
+
     /// Adds an undirected edge between `vertex1` and `vertex2`.
     ///
     /// # Panics
@@ -278,8 +301,36 @@ mod tests {
     // --- Bit Manipulation Tests (MSB-0 Logic) ---
 
     #[test]
+    fn has_edge_reads_back_what_was_added() {
+        let mut graph = DenseGraph::new(70); // two words per vertex
+        graph.add_edge(0, 69);
+        graph.add_edge(3, 64);
+
+        assert!(graph.has_edge(0, 69));
+        assert!(graph.has_edge(69, 0), "undirected adjacency is symmetric");
+        assert!(graph.has_edge(3, 64));
+        assert!(!graph.has_edge(0, 1));
+        assert_eq!(graph.number_of_vertices(), 70);
+    }
+
+    #[test]
+    fn has_edge_distinguishes_arc_direction() {
+        let mut graph = DenseGraph::new_directed(4);
+        graph.add_arc(0, 1);
+
+        assert!(graph.has_edge(0, 1));
+        assert!(!graph.has_edge(1, 0));
+    }
+
+    #[test]
+    #[should_panic(expected = "vertex out of range")]
+    fn has_edge_rejects_out_of_range_vertices() {
+        DenseGraph::new(4).has_edge(0, 4);
+    }
+
+    #[test]
     fn test_msb0_ordering() {
-        let mut data = vec![0usize];
+        let mut data = [0usize];
 
         // In Nauty/MSB-0: Index 0 is the HIGHEST bit.
         data.set_bit(0);
