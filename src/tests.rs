@@ -1,81 +1,8 @@
-use crate::structs::graph::add_one_edge;
-use crate::utilities::words_needed;
+//! Test suite. Compiled only under `cfg(test)`; the deterministic graph
+//! generators it shares with the benchmarks live in [`crate::generators`].
 
-pub fn generate_empty_graph(number_of_vertices: usize) -> Vec<usize> {
-    vec![0; words_needed(number_of_vertices) * number_of_vertices]
-}
+pub use crate::generators::*;
 
-pub fn generate_cycle_graph(number_of_vertices: usize) -> Vec<usize> {
-    let mut graph = generate_empty_graph(number_of_vertices);
-    if number_of_vertices == 1 {
-        return graph;
-    }
-    for index in 0..number_of_vertices {
-        add_one_edge(
-            &mut graph,
-            index,
-            (index + 1) % number_of_vertices,
-            words_needed(number_of_vertices) as u32,
-        );
-    }
-    graph
-}
-
-pub fn generate_complete_graph(number_of_vertices: usize) -> Vec<usize> {
-    let mut graph = generate_empty_graph(number_of_vertices);
-    let words = words_needed(number_of_vertices) as u32;
-
-    for row in 0..number_of_vertices {
-        for column in (row + 1)..number_of_vertices {
-            add_one_edge(&mut graph, row, column, words);
-        }
-    }
-    graph
-}
-
-pub fn generate_path_graph(number_of_vertices: usize) -> Vec<usize> {
-    let mut graph = generate_empty_graph(number_of_vertices);
-    let words = words_needed(number_of_vertices) as u32;
-
-    if number_of_vertices < 2 {
-        return graph;
-    }
-
-    for index in 0..(number_of_vertices - 1) {
-        add_one_edge(&mut graph, index, index + 1, words);
-    }
-    graph
-}
-
-pub fn generate_random_graph(number_of_vertices: usize, density: f64, seed: u64) -> Vec<usize> {
-    use rand::{SeedableRng, rngs::SmallRng};
-    let mut graph = generate_empty_graph(number_of_vertices);
-    let words = words_needed(number_of_vertices) as u32;
-    let mut random_generator = SmallRng::seed_from_u64(seed);
-    for row in 0..number_of_vertices {
-        for column in (row + 1)..number_of_vertices {
-            use rand::Rng;
-            if random_generator.random::<f64>() < density {
-                add_one_edge(&mut graph, row, column, words);
-            }
-        }
-    }
-    graph
-}
-
-pub fn generate_star_graph(number_of_vertices: usize) -> Vec<usize> {
-    let mut graph = generate_empty_graph(number_of_vertices);
-    let words = words_needed(number_of_vertices) as u32;
-
-    if number_of_vertices < 2 {
-        return graph;
-    }
-
-    for index in 1..number_of_vertices {
-        add_one_edge(&mut graph, 0, index, words);
-    }
-    graph
-}
 
 #[cfg(test)]
 mod test_graphs {
@@ -243,7 +170,7 @@ mod test_random {
 /// `CanonautManager::canonize_with_colors` — vertex-colored (partitioned) canonicalization.
 #[cfg(test)]
 mod test_colors {
-    use crate::{structs::CanonautManager, tests::generate_path_graph};
+    use crate::{structs::CanonautManager, generators::generate_path_graph};
 
     /// P4 (path on 4 vertices, edges 0-1,1-2,2-3) has one nontrivial automorphism:
     /// the reversal 0<->3, 1<->2. Coloring {0,1} vs {2,3} forbids it (0 is color 0,
@@ -312,7 +239,7 @@ mod test_colors {
 /// cross-checked against the equivalent raw-slice calls.
 #[cfg(test)]
 mod test_dense_graph_api {
-    use crate::{structs::{CanonautManager, DenseGraph}, tests::generate_cycle_graph};
+    use crate::{structs::{CanonautManager, DenseGraph}, generators::generate_cycle_graph};
 
     #[test]
     fn add_edge_matches_generated_cycle() {

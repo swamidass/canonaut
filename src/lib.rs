@@ -38,8 +38,14 @@ pub mod io;
 pub mod refine;
 pub mod rng;
 pub mod support;
+pub mod generators;
 pub mod search;
 pub mod structs;
 pub mod test_vectors;
 pub mod tests;
 pub mod utilities;
+
+#[cfg(test)]
+mod test_vectors;
+#[cfg(test)]
+mod tests;

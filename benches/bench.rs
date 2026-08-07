@@ -1,10 +1,9 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main, SamplingMode};
 use std::hint::black_box;
 use canonaut::{
-    graph6::parse_graph6_file,
-    structs::CanonautManager,
-    tests::{
-        generate_complete_graph, generate_cycle_graph, generate_path_graph,
+    generators::{
+        generate_cfi_graph, generate_complete_graph, generate_cycle_graph,
+        generate_hadamard_graph, generate_paley_graph, generate_path_graph,
         generate_random_graph, generate_star_graph,
     },
     utilities::words_needed,

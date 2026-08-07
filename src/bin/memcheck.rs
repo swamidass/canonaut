@@ -7,7 +7,7 @@
 //   family: complete | cycle | path | star | random
 
 use canonaut::structs::CanonautManager;
-use canonaut::tests::{
+use canonaut::generators::{
     generate_complete_graph, generate_cycle_graph, generate_path_graph, generate_random_graph,
     generate_star_graph,
 };

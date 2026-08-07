@@ -14,7 +14,7 @@
 use canonaut::{
     graph6::parse_graph6_file,
     structs::CanonautManager,
-    tests::{generate_complete_graph, generate_random_graph, generate_star_graph},
+    generators::{generate_complete_graph, generate_random_graph, generate_star_graph},
     utilities::words_needed,
 };
 use std::hint::black_box;
