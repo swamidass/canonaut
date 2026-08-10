@@ -235,7 +235,7 @@ impl SchreierSims {
 
         if power <= 5 {
             match power {
-                0 => return,
+                0 => (),
                 1 => { for entry in working_permutation.iter_mut() { *entry = perm_at!(*entry); } }
                 2 => { for entry in working_permutation.iter_mut() { *entry = perm_at!(perm_at!(*entry)); } }
                 3 => { for entry in working_permutation.iter_mut() { *entry = perm_at!(perm_at!(perm_at!(*entry))); } }

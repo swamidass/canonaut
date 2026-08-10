@@ -4,6 +4,7 @@
 //!   - n ≤ 62:       1 byte  = n + 63
 //!   - n ≤ 258047:   byte 126, then 3 bytes each = 6-bit chunk + 63
 //!   - larger n:     bytes 126,126, then 6 bytes each = 6-bit chunk + 63
+//!
 //! Adjacency: upper triangle (j=1..n-1, i=0..j-1), LSB-right packed 6 bits/byte,
 //! each byte stored as value + 63.
 
@@ -101,7 +102,7 @@ pub fn parse_graph6(input: &[u8]) -> Result<DenseGraph, Graph6Error> {
 
             if data_byte_index < adjacency_data.len() {
                 let raw_byte = adjacency_data[data_byte_index];
-                if raw_byte < 63 || raw_byte > 126 {
+                if !(63..=126).contains(&raw_byte) {
                     return Err(Graph6Error::InvalidByte(raw_byte));
                 }
                 if ((raw_byte - 63) >> bit_offset_in_byte) & 1 == 1 {

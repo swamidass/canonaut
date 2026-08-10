@@ -192,10 +192,9 @@ pub fn canonicalize(
     } else {
         options.target_cell_level
     };
-    options.algorithm_context.outfile = if (options.outfile).is_none() {
-        OutputStream::StandardOutput
-    } else {
-        std::mem::take(options.outfile.as_mut().unwrap())
+    options.algorithm_context.outfile = match options.outfile.as_mut() {
+        Some(stream) => std::mem::take(stream),
+        None => OutputStream::StandardOutput,
     };
 
     // Function pointers
@@ -252,17 +251,19 @@ pub fn canonicalize(
         partition[(options.algorithm_context.number_of_vertices - 1) as usize] = 0;
 
         number_of_cells = 0;
-        for index in 0..(options.algorithm_context.number_of_vertices as usize) {
-            if partition[index] != 0 {
-                partition[index] = ALGORITHM_INFINITY;
+        for cell_end_marker in partition
+            .iter_mut()
+            .take(options.algorithm_context.number_of_vertices as usize)
+        {
+            if *cell_end_marker != 0 {
+                *cell_end_marker = ALGORITHM_INFINITY;
             } else {
                 number_of_cells += 1;
             }
         }
         if let Some(active) = active {
-            for index in 0..(options.algorithm_context.number_of_vertices as usize) {
-                options.algorithm_context.active[index] = active[index];
-            }
+            let vertex_count = options.algorithm_context.number_of_vertices as usize;
+            options.algorithm_context.active[..vertex_count].copy_from_slice(&active[..vertex_count]);
         } else {
             options
                 .algorithm_context
@@ -404,8 +405,8 @@ pub fn canonicalize(
 
     // Cleanup
     if options.algorithm_context.number_of_vertices >= 320 {
-        if (options.algorithm_context.dispatch.freedyn).is_some() {
-            (options.algorithm_context.dispatch.freedyn).expect("non-null function pointer")();
+        if let Some(procedure) = options.algorithm_context.dispatch.freedyn {
+            procedure();
         }
         search_freedyn();
     }
@@ -530,8 +531,8 @@ fn first_path_node_0(
     }
 
     context.first_target_cell[level as usize] = target_cell_index;
-    if context.user_node_procedure.is_some() {
-        context.user_node_procedure.expect("non-null function pointer")(
+    if let Some(procedure) = context.user_node_procedure {
+        procedure(
             graph,
             labeling,
             partition,
@@ -546,8 +547,8 @@ fn first_path_node_0(
 
     if number_of_cells == context.number_of_vertices {
         firstterminal(labeling, level as u32, context, stats_ptr);
-        if context.user_level_procedure.is_some() {
-            context.user_level_procedure.expect("non-null function pointer")(
+        if let Some(procedure) = context.user_level_procedure {
+            procedure(
                 labeling,
                 partition,
                 level as u32,
@@ -561,7 +562,9 @@ fn first_path_node_0(
                 context.number_of_vertices,
             );
         }
-        if context.get_canonical && context.user_canonical_procedure.is_some() {
+        if let Some(canonical_procedure) =
+            context.user_canonical_procedure.filter(|_| context.get_canonical)
+        {
             (context.dispatch.update_canonical_graph).expect("non-null function pointer")(
                 graph,
                 canonical_graph,
@@ -572,7 +575,7 @@ fn first_path_node_0(
                 graph_context,
             );
             context.canonical_matching_rows = context.number_of_vertices;
-            if context.user_canonical_procedure.expect("non-null function pointer")(
+            if canonical_procedure(
                 graph,
                 &mut context.canonical_labeling,
                 canonical_graph,
@@ -692,10 +695,9 @@ fn first_path_node_0(
     if context.do_markers {
         writemarker(
             level as u32,
-            if first_target_vertex.is_some() {
-                first_target_vertex.unwrap() as i32
-            } else {
-                -1
+            match first_target_vertex {
+                Some(vertex) => vertex as i32,
+                None => -1,
             },
             same_orbit_count,
             target_cell_size,
@@ -706,8 +708,8 @@ fn first_path_node_0(
         );
     }
 
-    if context.user_level_procedure.is_some() {
-        context.user_level_procedure.expect("non-null function pointer")(
+    if let Some(procedure) = context.user_level_procedure {
+        procedure(
             labeling,
             partition,
             level as u32,
@@ -883,8 +885,8 @@ fn othernode0_rust(
             (stats_ptr.total_target_cell_members).wrapping_add(target_cell_size as usize);
     }
 
-    if context.user_node_procedure.is_some() {
-        context.user_node_procedure.expect("non-null function pointer")(
+    if let Some(procedure) = context.user_node_procedure {
+        procedure(
             graph,
             labeling,
             partition,
@@ -1175,8 +1177,8 @@ fn processnode(
             stats_ptr.number_of_orbits =
                 safe_orbjoin(orbits_slice, workperm_slice, context.number_of_vertices);
             stats_ptr.number_of_generators += 1;
-            if context.user_automorphism_procedure.is_some() {
-                context.user_automorphism_procedure.expect("non-null function pointer")(
+            if let Some(procedure) = context.user_automorphism_procedure {
+                procedure(
                     stats_ptr.number_of_generators,
                     &mut context.work_permutation,
                     orbits,
@@ -1226,8 +1228,8 @@ fn processnode(
                 );
             }
             stats_ptr.number_of_generators += 1;
-            if context.user_automorphism_procedure.is_some() {
-                context.user_automorphism_procedure.expect("non-null function pointer")(
+            if let Some(procedure) = context.user_automorphism_procedure {
+                procedure(
                     stats_ptr.number_of_generators,
                     &mut context.work_permutation,
                     orbits,
@@ -1262,7 +1264,9 @@ fn processnode(
             context.canonical_comparison = 0;
             context.canonical_path_codes[(level + 1) as usize] = 0o77777_u32 as i16;
             context.canonical_matching_rows = matching_rows;
-            if context.get_canonical && context.user_canonical_procedure.is_some() {
+            if let Some(canonical_procedure) =
+            context.user_canonical_procedure.filter(|_| context.get_canonical)
+        {
                 (context.dispatch.update_canonical_graph).expect("non-null function pointer")(
                     graph,
                     canonical_graph,
@@ -1273,7 +1277,7 @@ fn processnode(
                     graph_context,
                 );
                 context.canonical_matching_rows = context.number_of_vertices;
-                if context.user_canonical_procedure.expect("non-null function pointer")(
+                if canonical_procedure(
                     graph,
                     &mut context.canonical_labeling,
                     canonical_graph,
@@ -1327,7 +1331,7 @@ fn processnode(
     } else {
         candidate_level
     };
-    if short_prune_applicable && new_backtrack_level != context.gca_canonical_level as i32 {
+    if short_prune_applicable && new_backtrack_level != context.gca_canonical_level {
         context.needs_short_prune = true;
     }
     new_backtrack_level

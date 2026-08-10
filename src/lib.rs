@@ -26,11 +26,19 @@
 //! | Module | Purpose |
 //! |--------|---------|
 //! [`structs`] | Public types: [`structs::CanonautManager`], [`structs::DenseGraph`], [`structs::SparseGraph`], [`structs::Statistics`] |
-//! [`graph6`] | graph6 / sparse6 file format parser |
+//! [`graph6`] | graph6 file format parser (sparse6/digraph6 are rejected) |
 //! [`utilities`] | Low-level helpers: [`utilities::words_needed`], [`utilities::safe_orbjoin`] |
 //! [`structs::bitset`] | [`structs::BitSetOpsMSB0`] trait — MSB-0 bitset operations on `[usize]` |
 
+// The core search routines mirror nauty's C entry points (`nauty()`,
+// `refine()`, `targetcell()`, …) argument-for-argument so that the port can be
+// diffed against the reference implementation; splitting those signatures into
+// parameter structs would obscure that correspondence.  The dispatch vector is
+// likewise a direct translation of nauty's `dispatchvec` function pointers.
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
+
 pub mod bit_ops;
+pub mod generators;
 pub mod graph6;
 pub mod simd_ops;
 pub mod consts;
@@ -38,11 +46,8 @@ pub mod io;
 pub mod refine;
 pub mod rng;
 pub mod support;
-pub mod generators;
 pub mod search;
 pub mod structs;
-pub mod test_vectors;
-pub mod tests;
 pub mod utilities;
 
 #[cfg(test)]

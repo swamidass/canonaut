@@ -7,9 +7,15 @@ resolver = "3"
 name = "canonaut"
 version = "1.0.0"
 edition = "2024"
+rust-version = "1.85"
 license = "Apache-2.0"
-description = "Rust port of nauty — graph automorphism groups and canonical labelings"
+description = "Rust port of nauty: graph automorphism groups and canonical labelings"
 repository = "https://github.com/um-univie/canonaut"
+documentation = "https://docs.rs/canonaut"
+homepage = "https://github.com/um-univie/canonaut"
+readme = "README.md"
+keywords = ["graph", "canonicalization", "isomorphism", "automorphism", "nauty"]
+categories = ["algorithms", "science", "mathematics"]
 
 [features]
 # Compiles benches/c_nauty_helper.c and links the system libnauty so the

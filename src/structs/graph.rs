@@ -351,21 +351,21 @@ mod tests {
 
     #[test]
     fn test_contains_and_unset() {
-        let mut data = vec![0usize];
+        let mut data = [0usize];
 
-        assert_eq!(data.is_bit_set(5), false);
+        assert!(!data.is_bit_set(5));
 
         data.set_bit(5);
-        assert_eq!(data.is_bit_set(5), true);
+        assert!(data.is_bit_set(5));
 
         data.unset_bit(5);
-        assert_eq!(data.is_bit_set(5), false);
+        assert!(!data.is_bit_set(5));
         assert_eq!(data[0], 0);
     }
 
     #[test]
     fn test_clear_words() {
-        let mut data = vec![usize::MAX, usize::MAX, usize::MAX];
+        let mut data = [usize::MAX, usize::MAX, usize::MAX];
 
         // Clear first 2 words (simulating m=2)
         data.clear_words(2);
@@ -379,7 +379,7 @@ mod tests {
     fn test_next_set_bit() {
         // Setup: [0000...0000, 0010...0001]
         // We put no bits in the first word, and two bits in the second word.
-        let mut data = vec![0usize, 0usize];
+        let mut data = [0usize, 0usize];
 
         let bit_a = usize::BITS as usize + 2; // 3rd bit of second word
         let bit_b = usize::BITS as usize + (usize::BITS as usize - 1); // Last bit of second word
@@ -404,7 +404,7 @@ mod tests {
     fn test_next_set_bit_complex_masking() {
         // Test finding a bit in the SAME word, but after the start index
         // to ensure we are masking the "left" bits correctly.
-        let mut data = vec![0usize];
+        let mut data = [0usize];
 
         // Set bit 0 (MSB) and bit 10.
         data.set_bit(0);
@@ -418,7 +418,7 @@ mod tests {
     fn test_intersect_inplace() {
         // Word 0: 1111 (binary for simplification)
         // Word 1: 1010
-        let mut target = vec![0b1111, 0b1010];
+        let mut target = [0b1111, 0b1010];
         let source = vec![0b0110, 0b1100];
 
         target.intersect_inplace(&source);
@@ -431,7 +431,7 @@ mod tests {
 
     #[test]
     fn test_intersect_inplace_size_mismatch() {
-        let mut target = vec![usize::MAX, usize::MAX];
+        let mut target = [usize::MAX, usize::MAX];
         let source = vec![0]; // source is smaller
 
         target.intersect_inplace(&source);

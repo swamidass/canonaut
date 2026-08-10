@@ -19,12 +19,12 @@ pub enum OutputStream {
 
 impl PartialEq for OutputStream {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (OutputStream::StandardOutput, OutputStream::StandardOutput) => true,
-            (OutputStream::StandardError, OutputStream::StandardError) => true,
-            (OutputStream::FileOutput(_), OutputStream::FileOutput(_)) => true,
-            _ => false,
-        }
+        matches!(
+            (self, other),
+            (OutputStream::StandardOutput, OutputStream::StandardOutput)
+                | (OutputStream::StandardError, OutputStream::StandardError)
+                | (OutputStream::FileOutput(_), OutputStream::FileOutput(_))
+        )
     }
 }
 
@@ -258,12 +258,8 @@ impl InputStream {
     pub fn flush_line(&mut self) {
         let mut warning_started = false;
 
-        loop {
-            // Retrieve next character or break on EOF
-            let character = match self.get_char() {
-                Some(character) => character,
-                None => break,
-            };
+        // Consume characters until EOF.
+        while let Some(character) = self.get_char() {
 
             // Stop at newline
             if character == '\n' as i32 {

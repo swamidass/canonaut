@@ -368,8 +368,8 @@ pub fn apply_refinement(
     let mut cell_start: u32;
     let mut cell_end: u32;
     let previous_numcells: u32;
-    let min_invariant_level: i32;
-    let max_invariant_level: i32;
+    
+    
     let mut code_accumulator: i64;
     let mut cells_identical: bool;
     debug_assert!(graph_context.work_permutation.len() >= number_of_vertices as usize);
@@ -386,22 +386,21 @@ pub fn apply_refinement(
         number_of_vertices,
         graph_context,
     );
-    min_invariant_level = if minimum_invariant_level < 0 {
+    let min_invariant_level: i32 = if minimum_invariant_level < 0 {
         -minimum_invariant_level
     } else {
         minimum_invariant_level
     };
-    max_invariant_level = if maximum_invariant_level < 0 {
+    let max_invariant_level: i32 = if maximum_invariant_level < 0 {
         -maximum_invariant_level
     } else {
         maximum_invariant_level
     };
-    if invariant_procedure.is_some()
-        && *numcells < number_of_vertices
+    let invariant_applies = *numcells < number_of_vertices
         && level >= min_invariant_level
-        && level <= max_invariant_level
-    {
-        invariant_procedure.expect("non-null function pointer")(
+        && level <= max_invariant_level;
+    if let Some(procedure) = invariant_procedure.filter(|_| invariant_applies) {
+        procedure(
             graph,
             lab,
             partition,

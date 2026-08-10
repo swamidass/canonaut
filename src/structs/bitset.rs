@@ -177,7 +177,7 @@ impl BitMatrixDisplay for [usize] {
         let num_vertices = self.len() / words_per_vertex;
 
         // Safety check to ensure the slice is consistent
-        if !self.len().is_multiple_of(words_per_vertex) {
+        if self.len() % words_per_vertex != 0 {
             return format!(
                 "Error: Slice length {} is not divisible by words_per_vertex {}",
                 self.len(),

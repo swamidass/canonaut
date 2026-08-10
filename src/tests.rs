@@ -19,8 +19,10 @@ mod test_graphs {
     fn triangular_graph() {
         let max_vertex_number = 50;
         let repetitions = 100;
-        let mut canonaut_options = CanonautOptions::default();
-        canonaut_options.get_canonical = true;
+        let mut canonaut_options = CanonautOptions {
+            get_canonical: true,
+            ..Default::default()
+        };
         let mut graph_context = GraphContext::new(max_vertex_number);
         for number_of_vertices in 1..max_vertex_number {
             let mut reference = None;
@@ -29,9 +31,9 @@ mod test_graphs {
                 let graph = generate_cycle_graph(number_of_vertices);
                 let graph = randomly_permute_graph(&graph, number_of_vertices, words_per_vertex);
 
-                let mut orbits = vec![0u32; number_of_vertices as usize];
+                let mut orbits = vec![0u32; number_of_vertices];
                 let mut labeling = (0..(number_of_vertices as u32)).collect::<Vec<u32>>();
-                let mut partition = vec![ALGORITHM_INFINITY; number_of_vertices as usize];
+                let mut partition = vec![ALGORITHM_INFINITY; number_of_vertices];
                 let mut statistics = Statistics::new();
                 let worksize = 500;
                 let mut workspace = vec![0; 2 * words_per_vertex * worksize];
@@ -65,8 +67,6 @@ mod test_graphs {
     fn path_graph() {
         let max_vertex_number = 50;
         let repetitions = 100;
-        let mut canonaut_options = CanonautOptions::default();
-        canonaut_options.get_canonical = true;
         let mut canonaut_manager = CanonautManager::new(max_vertex_number);
         for number_of_vertices in 1..max_vertex_number {
             let mut reference = None;
@@ -80,7 +80,7 @@ mod test_graphs {
                 if reference.is_none() {
                     reference = Some(canonaut_manager.take_canonical_graph());
                 } else {
-                    if !(reference.as_deref() == Some(&canonaut_manager.canonical_graph)) {
+                    if reference.as_deref() != Some(&canonaut_manager.canonical_graph) {
                         panic!("Graphs are not identical")
                     }
                 }

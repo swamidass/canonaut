@@ -234,7 +234,7 @@ impl AlgorithmContext {
 
 /// Function dispatch table that selects dense- or sparse-graph implementations.
 ///
-/// The default ([`DISPATCH_GRAPH`](crate::refine::DISPATCH_GRAPH)) uses the
+/// The default ([`crate::refine::DISPATCH_GRAPH`]) uses the
 /// dense bit-matrix routines. Replacing individual slots enables custom
 /// refinement, automorphism-check, or target-cell strategies.
 #[derive(Copy, Clone, Default)]
@@ -438,7 +438,7 @@ pub struct CanonautOptions {
     pub algorithm_context: AlgorithmContext,
 }
 
-impl<'a> Default for CanonautOptions {
+impl Default for CanonautOptions {
     fn default() -> Self {
         CanonautOptions {
             get_canonical: false,
