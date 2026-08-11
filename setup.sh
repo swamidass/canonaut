@@ -102,6 +102,11 @@ else
 
     log "Regenerating test_data/*.ref (pynauty ground truth)"
     "$VENV/bin/python3" tools/gen_g6_vectors.py
+
+    # The committed smoke corpus is a deterministic sample of the above; it is
+    # what a plain `cargo test` cross-validates on a fresh clone.
+    log "Regenerating test_data/smoke/ (committed cross-validation sample)"
+    "$VENV/bin/python3" tools/gen_smoke_corpus.py
 fi
 
 # ---------------------------------------------------------------------------
