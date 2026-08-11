@@ -33,6 +33,10 @@ cc = "1"
 [dev-dependencies]
 criterion = "0.8.1"
 
+[[bin]]
+name = "compare_stats"
+required-features = ["c-nauty-bench"]
+
 [[bench]]
 name = "bench"
 harness = false

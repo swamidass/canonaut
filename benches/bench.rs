@@ -6,6 +6,8 @@ use canonaut::{
         generate_hadamard_graph, generate_paley_graph, generate_path_graph,
         generate_random_graph, generate_star_graph,
     },
+    graph6::parse_graph6_file,
+    structs::CanonautManager,
     utilities::words_needed,
 };
 
@@ -256,6 +258,46 @@ fn bench_scaling(criterion: &mut Criterion) {
     group.finish();
 }
 
+/// Refinement-blind ("hard") instances: colour refinement distinguishes
+/// nothing on these, so runtime is dominated by the search tree instead of the
+/// refinement inner loops.  Constructed in-process, so both implementations
+/// canonicalize the identical buffer.
+///   cfi/<n>      Cai-Furer-Immerman graph over the 3-regular circulant,
+///                n = 10 x base vertex count
+///   hadamard/<n> Sylvester Hadamard bipartite graph, n = 2 x matrix order
+///   paley/<n>    Paley graph on n vertices (strongly regular)
+fn bench_hard(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("hard");
+    group.sample_size(10);
+    group.warm_up_time(std::time::Duration::from_secs(1));
+    group.sampling_mode(SamplingMode::Flat);
+
+    let mut instances: Vec<(&str, usize, Vec<usize>)> = Vec::new();
+    for base_vertex_count in [20usize, 40, 60, 100] {
+        instances.push(("cfi", 10 * base_vertex_count, generate_cfi_graph(base_vertex_count, false)));
+    }
+    for order in [64usize, 128, 256] {
+        instances.push(("hadamard", 2 * order, generate_hadamard_graph(order)));
+    }
+    for prime_order in [101usize, 257, 509] {
+        instances.push(("paley", prime_order, generate_paley_graph(prime_order)));
+    }
+
+    for (label, vertex_count, graph) in instances {
+        let words_per_vertex = words_needed(vertex_count);
+        group.bench_with_input(BenchmarkId::new(format!("canonaut/{label}"), vertex_count), &vertex_count, |bencher, _| {
+            let mut manager = CanonautManager::new(vertex_count).with_canonization();
+            bencher.iter(|| manager.canonize(black_box(&graph)));
+        });
+        group.bench_with_input(BenchmarkId::new(format!("nauty/{label}"), vertex_count), &vertex_count, |bencher, _| {
+            let mut c_nauty_buffers = CNautyBuffers::new(vertex_count, words_per_vertex);
+            bencher.iter(|| run_c_nauty(black_box(&graph), &mut c_nauty_buffers, words_per_vertex as i32, vertex_count as i32));
+        });
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_complete,
@@ -265,5 +307,6 @@ criterion_group!(
     bench_random,
     bench_g6_batch,
     bench_scaling,
+    bench_hard,
 );
 criterion_main!(benches);

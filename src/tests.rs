@@ -1067,3 +1067,145 @@ mod test_digraphs {
         assert_eq!(manager.canonical_graph, canon_forward);
     }
 }
+
+/// Refinement-blind families: CFI, Hadamard and Paley graphs.  These are the
+/// instances where individual refinement gains nothing, so they exercise the
+/// search-tree machinery rather than the refinement inner loops.
+#[cfg(test)]
+mod test_hard_instances {
+    use crate::{
+        generators::{generate_cfi_graph, generate_hadamard_graph, generate_paley_graph},
+        structs::CanonautManager,
+        tests::randomly_permute_graph,
+        utilities::words_needed,
+    };
+
+    fn canonical_form(graph: &[usize], vertex_count: usize) -> Vec<usize> {
+        let mut manager = CanonautManager::new(vertex_count).with_canonization();
+        manager.canonize(graph);
+        manager.canonical_graph.clone()
+    }
+
+    fn assert_relabeling_invariant(graph: &[usize], vertex_count: usize, label: &str) {
+        let words_per_vertex = words_needed(vertex_count);
+        let reference = canonical_form(graph, vertex_count);
+        for repetition in 0..5 {
+            let permuted = randomly_permute_graph(graph, vertex_count, words_per_vertex);
+            assert_eq!(
+                canonical_form(&permuted, vertex_count),
+                reference,
+                "{label}: canonical form not invariant under relabeling (repetition {repetition})",
+            );
+        }
+    }
+
+    /// The twisted and untwisted CFI graphs over the same base are
+    /// non-isomorphic but colour-refinement-equivalent: canonicalization is the
+    /// only thing that can tell them apart, so their canonical forms must
+    /// differ while each stays stable under relabeling.
+    #[test]
+    fn cfi_twisted_is_distinguished_from_untwisted() {
+        for base_vertex_count in [4, 6, 8] {
+            let vertex_count = 10 * base_vertex_count;
+            let plain = generate_cfi_graph(base_vertex_count, false);
+            let twisted = generate_cfi_graph(base_vertex_count, true);
+
+            assert_relabeling_invariant(&plain, vertex_count, "CFI (untwisted)");
+            assert_relabeling_invariant(&twisted, vertex_count, "CFI (twisted)");
+
+            assert_ne!(
+                canonical_form(&plain, vertex_count),
+                canonical_form(&twisted, vertex_count),
+                "CFI base {base_vertex_count}: twisted and untwisted graphs are non-isomorphic \
+                 but received the same canonical form",
+            );
+        }
+    }
+
+    #[test]
+    fn hadamard_graphs_are_relabeling_invariant() {
+        for order in [4, 8, 16, 32] {
+            assert_relabeling_invariant(
+                &generate_hadamard_graph(order),
+                2 * order,
+                &format!("Hadamard order {order}"),
+            );
+        }
+    }
+
+    /// The Paley graph on a prime `q = 1 (mod 4)` has automorphism group of
+    /// order `q(q-1)/2`, which is independent ground truth for the group-size
+    /// statistics on a strongly regular (refinement-blind) input.
+    #[test]
+    fn paley_graph_group_order_matches_theory() {
+        for prime_order in [5usize, 13, 17, 29, 37] {
+            let graph = generate_paley_graph(prime_order);
+            let mut manager = CanonautManager::new(prime_order).with_canonization();
+            manager.canonize(&graph);
+
+            let statistics = manager.statistics();
+            let group_order =
+                statistics.group_size1 * 10f64.powi(statistics.group_size2 as i32);
+            let expected = (prime_order * (prime_order - 1) / 2) as f64;
+            assert!(
+                (group_order - expected).abs() <= expected * 1e-9,
+                "Paley({prime_order}): |Aut| = {group_order}, expected {expected}",
+            );
+            assert_eq!(
+                statistics.number_of_orbits, 1,
+                "Paley({prime_order}) is vertex-transitive, so it has one orbit",
+            );
+
+            assert_relabeling_invariant(&graph, prime_order, &format!("Paley({prime_order})"));
+        }
+    }
+}
+
+/// Small, fast canonicalizations that between them touch every word-count
+/// specialisation (m = 1, 2, >2) and both the automorphism-check and
+/// vertex-permutation paths.  Kept cheap on purpose: this is the module the
+/// Miri job runs, where a full corpus sweep would be far too slow.
+#[cfg(test)]
+mod test_word_boundary_paths {
+    use crate::{
+        generators::{generate_cycle_graph, generate_paley_graph, generate_random_graph},
+        structs::CanonautManager,
+        tests::randomly_permute_graph,
+        utilities::words_needed,
+    };
+
+    #[test]
+    fn canonical_form_stable_across_word_boundaries() {
+        // m = 1, 2, 3 and 4 words per vertex.
+        for vertex_count in [40usize, 70, 130, 200] {
+            let words_per_vertex = words_needed(vertex_count);
+            for graph in [
+                generate_cycle_graph(vertex_count),
+                generate_random_graph(vertex_count, 0.5, 7),
+            ] {
+                let mut manager = CanonautManager::new(vertex_count).with_canonization();
+                manager.canonize(&graph);
+                let reference = manager.canonical_graph.clone();
+
+                let permuted = randomly_permute_graph(&graph, vertex_count, words_per_vertex);
+                manager.canonize(&permuted);
+                assert_eq!(
+                    manager.canonical_graph, reference,
+                    "n={vertex_count}: canonical form not invariant under relabeling",
+                );
+            }
+        }
+    }
+
+    /// A symmetric multi-word instance, so the automorphism-check paths are
+    /// entered rather than skipped for want of automorphisms.
+    #[test]
+    fn symmetric_multiword_instance() {
+        let graph = generate_paley_graph(101);
+        let mut manager = CanonautManager::new(101).with_canonization();
+        manager.canonize(&graph);
+        let statistics = manager.statistics();
+        assert_eq!(statistics.number_of_orbits, 1);
+        assert!(statistics.number_of_generators > 0);
+    }
+}

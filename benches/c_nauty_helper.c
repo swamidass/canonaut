@@ -22,3 +22,30 @@ void c_nauty_dense_canonize(
     statsblk stats;
     densenauty(g, lab, ptn, orbits, &opts, &stats, m, n, canong);
 }
+
+/*
+ * Same call, but also reporting nauty's search statistics, so the port's
+ * search tree can be compared against the reference's node for node.
+ */
+void c_nauty_dense_canonize_stats(
+    graph *g,
+    int *lab, int *ptn, int *orbits,
+    graph *canong,
+    int m, int n,
+    double *group_size1, int *group_size2, int *num_orbits, int *num_generators,
+    long *num_nodes, long *num_bad_leaves, int *max_level, long *canon_updates
+) {
+    DEFAULTOPTIONS_GRAPH(opts);
+    opts.getcanon = TRUE;
+    statsblk stats;
+    densenauty(g, lab, ptn, orbits, &opts, &stats, m, n, canong);
+
+    *group_size1 = stats.grpsize1;
+    *group_size2 = stats.grpsize2;
+    *num_orbits = stats.numorbits;
+    *num_generators = stats.numgenerators;
+    *num_nodes = stats.numnodes;
+    *num_bad_leaves = stats.numbadleaves;
+    *max_level = stats.maxlevel;
+    *canon_updates = stats.canupdates;
+}
