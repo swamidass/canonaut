@@ -100,4 +100,9 @@ jobs:
           pattern: wheels-*
           merge-multiple: true
           path: dist
+      # Tolerate files that are already on PyPI (for instance a wheel uploaded
+      # by hand before the workflow existed): the remaining artifacts still go
+      # up, and the release does not fail over a duplicate.
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
