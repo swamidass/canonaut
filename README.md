@@ -1,7 +1,9 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
-    <img src="assets/logo.svg" alt="canonaut" width="380">
+    <source media="(prefers-color-scheme: dark)"
+            srcset="https://raw.githubusercontent.com/um-univie/canonaut/v1.0.0/assets/logo-dark.png">
+    <img src="https://raw.githubusercontent.com/um-univie/canonaut/v1.0.0/assets/logo.png"
+         alt="canonaut" width="380">
   </picture>
 </p>
 

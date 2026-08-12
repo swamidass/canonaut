@@ -15,6 +15,15 @@
 //! cargo run --example logo            # writes assets/logo.svg, logo-dark.svg,
 //!                                     # logo-mark.svg
 //! ```
+//!
+//! The README embeds PNG renderings of these (crates.io and PyPI cannot
+//! resolve repository-relative paths, and raw.githubusercontent serves SVG as
+//! text/plain).  Regenerate them with:
+//!
+//! ```sh
+//! rsvg-convert -w 760 assets/logo.svg      -o assets/logo.png
+//! rsvg-convert -w 760 assets/logo-dark.svg -o assets/logo-dark.png
+//! ```
 
 use canonaut::structs::{CanonautManager, DenseGraph};
 use std::f64::consts::PI;
