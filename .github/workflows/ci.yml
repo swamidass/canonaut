@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, ${{ matrix.toolchain }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: [stable]
+        include:
+          # Minimum supported Rust version, as declared in Cargo.toml / the paper.
+          - os: ubuntu-latest
+            toolchain: "1.85"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - uses: Swatinem/rust-cache@v2
+      # test_data/smoke/ is committed, so the pynauty cross-validation runs
+      # here without installing nauty or Python.
+      - run: cargo test --all-targets
+      - run: cargo test --doc
+
+  lint:
+    name: fmt + clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      # Advisory until the tree has been run through `cargo fmt` once; the
+      # clippy gate below is enforced.
+      - run: cargo fmt --all --check
+        continue-on-error: true
+      - run: cargo clippy --all-targets -- -D warnings
+
+  miri:
+    name: miri (undefined-behaviour check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+      # Corpus sweeps and the repetition-heavy tests are far too slow under
+      # Miri; the subset below still enters every unsafe code path — the
+      # word-count-specialised automorphism check, the vertex-permutation
+      # routine and the bitset primitives — via
+      # tests::test_word_boundary_paths (m = 1, 2, 3, 4). ~7 min.
+      - run: >
+          cargo miri test --lib --
+          --skip g6 --skip large --skip smoke --skip fuzz
+          --skip hard_instances --skip test_graphs --skip test_random --skip test_known
+        env:
+          MIRIFLAGS: -Zmiri-disable-isolation
+
+  cross-validate:
+    name: full pynauty cross-validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install nauty (geng/genbg) and pynauty
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nauty
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pynauty networkx
+      - name: Regenerate the full corpora and run every test
+        run: ./setup.sh
+
+  python:
+    name: python bindings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - run: pip install maturin pytest networkx
+      - run: maturin build --release --out dist
+        working-directory: bindings/python
+      - run: pip install --find-links bindings/python/dist canonaut
+      - run: pytest bindings/python/tests -v

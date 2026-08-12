@@ -1,13 +1,13 @@
 [package]
-name = "graphcanon-py"
-version = "0.1.0"
+name = "canonaut-py"
+version = "1.0.0"
 edition = "2024"
 publish = false
 
 [lib]
-name = "graphcanon"
+name = "_canonaut"
 crate-type = ["cdylib"]
 
 [dependencies]
-canonaut = { path = "../.." }
+canonaut = { path = "../..", version = "1.0.0" }
 pyo3 = { version = "0.24", features = ["extension-module", "abi3-py39"] }

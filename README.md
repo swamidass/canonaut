@@ -1,4 +1,17 @@
-# canonaut
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+    <img src="assets/logo.svg" alt="canonaut" width="380">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://crates.io/crates/canonaut"><img alt="crates.io" src="https://img.shields.io/crates/v/canonaut.svg"></a>
+  <a href="https://docs.rs/canonaut"><img alt="docs.rs" src="https://img.shields.io/docsrs/canonaut"></a>
+  <a href="https://pypi.org/project/canonaut/"><img alt="PyPI" src="https://img.shields.io/pypi/v/canonaut"></a>
+  <a href="https://github.com/um-univie/canonaut/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/um-univie/canonaut/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg">
+</p>
 
 A safe, native Rust implementation of [nauty](https://pallini.di.uniroma1.it/) — McKay's algorithm for computing graph automorphism groups and canonical labelings.
 
@@ -28,7 +41,7 @@ adjacency matrix.
 
 ## `CanonautManager` — high-level API
 
-`CanonautManager` owns all working buffers and reuses them across calls. Allocate once, run many times — zero allocation on the hot path as long as the graph order doesn't grow.
+`CanonautManager` owns all working buffers and reuses them across calls. Allocate once, run many times — zero allocation on the hot path as long as the graph order doesn't grow (measured by `src/bin/memcheck`, which counts every heap request; see `repro/`).
 
 ### Canonicalization
 
@@ -191,19 +204,54 @@ println!("{:?}", canon);
 cargo test
 ```
 
-Comparison tests against pynauty reference output need `test_data/` populated
-first. `test_data/` isn't committed — every file in it is regenerated
-deterministically (the `.g6` corpora are exact `geng`/`networkx` output, the
-`.ref` files are pynauty ground truth):
+runs 105 of the suite's 133 tests with no external tooling, including the
+committed `test_data/smoke/` corpus: 1 965 graphs (n = 9…129, sampled across
+every corpus below) whose canonical forms are compared byte-for-byte against
+pynauty reference output.
+
+The remaining 28 tests compare against the *full* corpora, which are not
+committed (~125 MB) but regenerate deterministically — the `.g6` files are
+exact `geng`/`networkx` output, the `.ref` files pynauty ground truth:
 
 ```sh
 ./setup.sh                    # installs nauty + a Python venv, regenerates
-                               # test_data/, then runs the full test suite
+                              # test_data/, then runs the full test suite
 
 ./setup.sh --skip-testdata    # skip all of the above, just build + `cargo test`
+
+cargo test -- --include-ignored   # once test_data/ exists
 ```
 
-See `setup.sh` for exactly what each step installs and regenerates.
+Tests that need a corpus that isn't present skip with a message instead of
+failing. Regenerate the committed sample with
+`.venv-testdata/bin/python3 tools/gen_smoke_corpus.py`.
+
+Lints and undefined-behaviour checks, as run in CI:
+
+```sh
+cargo clippy --all-targets -- -D warnings
+MIRIFLAGS=-Zmiri-disable-isolation cargo +nightly miri test --lib -- \
+  --skip g6 --skip large --skip smoke --skip fuzz \
+  --skip hard_instances --skip test_graphs --skip test_random --skip test_known
+```
+
+The Miri subset still enters every unsafe path (m = 1, 2, 3, 4 words per
+vertex) via `tests::test_word_boundary_paths`; it takes about seven minutes,
+whereas the corpus sweeps would take days.
+
+## Hard instances
+
+`canonaut::generators` also builds the standard refinement-blind families used
+to stress the search rather than the refinement loops — `generate_cfi_graph`
+(Cai–Fürer–Immerman, twisted or not), `generate_hadamard_graph` (Sylvester),
+and `generate_paley_graph` (strongly regular). They are benchmarked by the
+`hard` group and used as test ground truth.
+
+## Reproducing the published measurements
+
+`repro/` regenerates every table and figure in the paper — Criterion timings
+with confidence intervals, peak RSS versus C nauty, and the allocation counts
+behind the "no allocation in the steady state" claim. See `repro/README.md`.
 
 ## Benchmarks
 
@@ -220,7 +268,7 @@ A plain `cargo build` / `cargo test` has no C dependencies.
 
 ## Python bindings
 
-`bindings/python` (package `graphcanon` on PyPI) exposes `canonize()` and
+`bindings/python` (package `canonaut` on PyPI) exposes `canonize()` and
 `are_isomorphic()` via [pyo3](https://pyo3.rs)/[maturin](https://www.maturin.rs),
 with arbitrary hashable node labels and `networkx` interoperability on top of
 the same `CanonautManager` core. It's a separate workspace member — not built
@@ -232,6 +280,16 @@ maturin develop --release   # or: maturin build --release
 ```
 
 See `bindings/python/README.md` for the Python-side API.
+
+## Logo
+
+The mark is the Petersen graph, coloured by the vertex orbits `canonaut`
+computes for it after individualising a single vertex — the picture is output
+of the library it labels. Regenerate the SVGs (light, dark, square mark) with:
+
+```sh
+cargo run --example logo
+```
 
 ## License
 

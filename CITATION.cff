@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: "If you use canonaut in academic work, please cite the SoftwareX article below."
+title: "canonaut: A Safe Rust Implementation of the nauty Graph Canonicalization Algorithm"
+abstract: >-
+  canonaut is a native, memory-safe Rust implementation of the nauty graph
+  canonicalization and automorphism-group algorithm, with graph6 I/O,
+  vertex-colored canonicalization, digraph support, and Python bindings
+  distributed under the same name.
+type: software
+version: 1.0.0
+license: Apache-2.0
+repository-code: "https://github.com/um-univie/canonaut"
+url: "https://docs.rs/canonaut"
+keywords:
+  - graph canonicalization
+  - automorphism group
+  - graph isomorphism
+  - nauty
+  - Rust
+authors:
+  - family-names: Uhlir
+    given-names: Manuel
+    email: manuel.uhlir@univie.ac.at
+    orcid: "https://orcid.org/0009-0002-7720-2316"
+    affiliation: "Institute of Theoretical Chemistry, University of Vienna"
+  - family-names: Flamm
+    given-names: Christoph
+    email: christoph.flamm@univie.ac.at
+    orcid: "https://orcid.org/0000-0001-5500-2415"
+    affiliation: "Institute of Theoretical Chemistry, University of Vienna"
+references:
+  - type: article
+    title: "Practical graph isomorphism, II"
+    authors:
+      - family-names: McKay
+        given-names: "Brendan D."
+      - family-names: Piperno
+        given-names: Adolfo
+    journal: "Journal of Symbolic Computation"
+    volume: 60
+    start: 94
+    end: 112
+    year: 2014
+    doi: 10.1016/j.jsc.2013.09.003

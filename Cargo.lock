@@ -54,6 +54,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "canonaut-py"
+version = "1.0.0"
+dependencies = [
+ "canonaut",
+ "pyo3",
+]
+
+[[package]]
 name = "cast"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -215,14 +223,6 @@ dependencies = [
  "libc",
  "r-efi",
  "wasip2",
-]
-
-[[package]]
-name = "graphcanon-py"
-version = "0.1.0"
-dependencies = [
- "canonaut",
- "pyo3",
 ]
 
 [[package]]

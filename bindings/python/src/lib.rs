@@ -145,8 +145,8 @@ impl CanonResult {
 ///
 /// Examples
 /// --------
-/// >>> import graphcanon
-/// >>> r = graphcanon.canonize(6, [(0,1),(1,2),(2,3),(3,4),(4,5),(5,0)])
+/// >>> import canonaut
+/// >>> r = canonaut.canonize(6, [(0,1),(1,2),(2,3),(3,4),(4,5),(5,0)])
 /// >>> r.num_orbits
 /// 1
 #[pyfunction]
@@ -248,7 +248,7 @@ fn are_isomorphic(
 // ---------------------------------------------------------------------------
 
 #[pymodule]
-fn _graphcanon(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _canonaut(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<CanonResult>()?;
     m.add_function(wrap_pyfunction!(canonize, m)?)?;
     m.add_function(wrap_pyfunction!(are_isomorphic, m)?)?;

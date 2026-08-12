@@ -1,17 +1,17 @@
 """
-graphcanon — ergonomic Python bindings for canonaut (a safe Rust port of nauty).
+canonaut — ergonomic Python bindings for canonaut (a safe Rust port of nauty).
 
 High-level API (this module): works with arbitrary hashable node labels
 (ints, strings, tuples, ...), dict-based vertex colors, and duck-types
 networkx-like graph objects. See `canonize()` and `are_isomorphic()`.
 
-Low-level API (`graphcanon.raw`): the compiled extension's raw functions,
+Low-level API (`canonaut.raw`): the compiled extension's raw functions,
 operating on 0..n-1 integer vertex indices only. Use these if you already
 have integer-labeled graphs and want to skip the node-translation overhead.
 """
 
-from . import _graphcanon as raw
-from ._graphcanon import CanonResult as _RawCanonResult
+from . import _canonaut as raw
+from ._canonaut import CanonResult as _RawCanonResult
 
 __all__ = ["canonize", "are_isomorphic", "CanonResult", "raw"]
 
@@ -161,11 +161,11 @@ def canonize(edges, *, nodes=None, colors=None, directed=False, generators=False
 
     Examples
     --------
-    >>> import graphcanon
-    >>> r = graphcanon.canonize([("a","b"),("b","c"),("c","d"),("d","a")])
+    >>> import canonaut
+    >>> r = canonaut.canonize([("a","b"),("b","c"),("c","d"),("d","a")])
     >>> r.num_orbits
     1
-    >>> r2 = graphcanon.canonize(
+    >>> r2 = canonaut.canonize(
     ...     [(0,1),(1,2),(2,3)],
     ...     colors={0: "red", 1: "red", 2: "blue", 3: "blue"},
     ... )

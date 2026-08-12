@@ -1,0 +1,41 @@
+{
+  "title": "canonaut: A Safe Rust Implementation of the nauty Graph Canonicalization Algorithm",
+  "description": "<p>canonaut is a native, memory-safe Rust implementation of the nauty graph canonicalization and automorphism-group algorithm (McKay 1981; McKay &amp; Piperno 2014). Canonical forms are byte-identical to those of C nauty, so canonical hashes computed by the two are interchangeable. The library supports dense graphs, canonical labeling, vertex-coloured (partitioned) canonicalization, digraphs, automorphism group generators, graph6 I/O and the Schreier&ndash;Sims stabiliser chain, and ships Python bindings of the same name with arbitrary hashable node labels and networkx interoperability.</p><p>This deposit is the archived snapshot accompanying the SoftwareX article, and includes the reproducible capsule in <code>repro/</code>, which regenerates every table and figure of the paper.</p>",
+  "upload_type": "software",
+  "license": "Apache-2.0",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Uhlir, Manuel",
+      "orcid": "0009-0002-7720-2316",
+      "affiliation": "Institute of Theoretical Chemistry, Faculty of Chemistry, University of Vienna, Austria"
+    },
+    {
+      "name": "Flamm, Christoph",
+      "orcid": "0000-0001-5500-2415",
+      "affiliation": "Institute of Theoretical Chemistry, Faculty of Chemistry, University of Vienna, Austria"
+    }
+  ],
+  "keywords": [
+    "graph canonicalization",
+    "automorphism group",
+    "graph isomorphism",
+    "nauty",
+    "Rust",
+    "combinatorics",
+    "cheminformatics"
+  ],
+  "grants": [
+    {
+      "id": "10.13039/501100009708::NNF21OC0066551"
+    }
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/um-univie/canonaut",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ],
+  "notes": "Funded by the Novo Nordisk Foundation, Challenge Programme 2021 (MATOMIC, NNF21OC0066551). M.U. acknowledges support from the Vienna Doctoral School in Chemistry (DoSChem)."
+}

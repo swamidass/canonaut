@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108" role="img" aria-label="canonaut">
+  <title>canonaut</title>
+  <g stroke-linecap="round">
+    <line x1="54.00" y1="10.00" x2="95.85" y2="40.40" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="54.00" y1="10.00" x2="12.15" y2="40.40" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="54.00" y1="10.00" x2="54.00" y2="29.50" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="95.85" y1="40.40" x2="79.86" y2="89.60" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="95.85" y1="40.40" x2="77.30" y2="46.43" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="79.86" y1="89.60" x2="28.14" y2="89.60" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="79.86" y1="89.60" x2="68.40" y2="73.82" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="28.14" y1="89.60" x2="12.15" y2="40.40" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="28.14" y1="89.60" x2="39.60" y2="73.82" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="12.15" y1="40.40" x2="30.70" y2="46.43" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="54.00" y1="29.50" x2="68.40" y2="73.82" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="54.00" y1="29.50" x2="39.60" y2="73.82" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="77.30" y1="46.43" x2="39.60" y2="73.82" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="77.30" y1="46.43" x2="30.70" y2="46.43" stroke="#1d2433" stroke-width="3.0"/>
+    <line x1="68.40" y1="73.82" x2="30.70" y2="46.43" stroke="#1d2433" stroke-width="3.0"/>
+  </g>
+  <circle cx="54.00" cy="10.00" r="5.8" fill="#e2574c" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="95.85" cy="40.40" r="5.8" fill="#f5b731" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="79.86" cy="89.60" r="5.8" fill="#2a78d6" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="28.14" cy="89.60" r="5.8" fill="#2a78d6" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="12.15" cy="40.40" r="5.8" fill="#f5b731" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="54.00" cy="29.50" r="5.8" fill="#f5b731" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="77.30" cy="46.43" r="5.8" fill="#2a78d6" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="68.40" cy="73.82" r="5.8" fill="#2a78d6" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="39.60" cy="73.82" r="5.8" fill="#2a78d6" stroke="#ffffff" stroke-width="2.4"/>
+  <circle cx="30.70" cy="46.43" r="5.8" fill="#2a78d6" stroke="#ffffff" stroke-width="2.4"/>
+</svg>
