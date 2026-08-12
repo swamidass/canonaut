@@ -37,6 +37,10 @@ criterion = "0.8.1"
 name = "compare_stats"
 required-features = ["c-nauty-bench"]
 
+[[bin]]
+name = "ab_compare"
+required-features = ["c-nauty-bench"]
+
 [[bench]]
 name = "bench"
 harness = false
