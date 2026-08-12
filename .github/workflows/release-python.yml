@@ -35,7 +35,9 @@ jobs:
             target: aarch64
           - runner: macos-latest
             target: aarch64
-          - runner: macos-13
+          # GitHub retired the Intel macOS runners, so the x86_64 wheel is
+          # cross-compiled from the Apple-silicon runner.
+          - runner: macos-latest
             target: x86_64
           - runner: windows-latest
             target: x64
