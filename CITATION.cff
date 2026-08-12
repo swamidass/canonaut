@@ -8,6 +8,7 @@ abstract: >-
   distributed under the same name.
 type: software
 version: 1.0.0
+doi: 10.5281/zenodo.21904399
 license: Apache-2.0
 repository-code: "https://github.com/um-univie/canonaut"
 url: "https://docs.rs/canonaut"
