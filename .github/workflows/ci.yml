@@ -23,21 +23,30 @@ jobs:
           - os: ubuntu-latest
             toolchain: "1.85"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
       - uses: Swatinem/rust-cache@v2
       # test_data/smoke/ is committed, so the pynauty cross-validation runs
       # here without installing nauty or Python.
+      #
+      # The MSRV applies to what a consumer builds: the library and its
+      # binaries.  The benchmark harness (Criterion) is a dev-dependency and
+      # requires a newer toolchain than canonaut itself, so the MSRV job checks
+      # the library only.
       - run: cargo test --all-targets
+        if: matrix.toolchain == 'stable'
       - run: cargo test --doc
+        if: matrix.toolchain == 'stable'
+      - run: cargo check --lib --bins
+        if: matrix.toolchain != 'stable'
 
   lint:
     name: fmt + clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -52,7 +61,7 @@ jobs:
     name: miri (undefined-behaviour check)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: miri
@@ -73,7 +82,7 @@ jobs:
     name: full pynauty cross-validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Install nauty (geng/genbg) and pynauty
@@ -89,7 +98,7 @@ jobs:
     name: python bindings
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-python@v5
         with:
