@@ -295,7 +295,7 @@ cargo run --example logo
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](LICENSE).
+Licensed under the [Apache License, Version 2.0](LICENSE.txt).
 
 This crate is a Rust port of [nauty and Traces](https://pallini.di.uniroma1.it/) (version 2.6+), which is also licensed under the Apache License, Version 2.0.
 
