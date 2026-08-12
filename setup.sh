@@ -48,8 +48,12 @@ if [ "$SKIP_TESTDATA" = "1" ]; then
     log "Skipping test_data regeneration (--skip-testdata)"
 else
     log "nauty (geng/genbg, C library)"
-    if command -v geng >/dev/null 2>&1; then
-        echo "found: $(command -v geng)"
+    # Debian and Ubuntu ship the generators prefixed (nauty-geng); Homebrew and
+    # a source build install them unprefixed.
+    find_geng() { command -v geng || command -v nauty-geng || true; }
+    GENG="$(find_geng)"
+    if [ -n "$GENG" ]; then
+        echo "found: $GENG"
     else
         os="$(uname -s)"
         if [ "$os" = "Darwin" ] && command -v brew >/dev/null 2>&1; then
@@ -64,6 +68,12 @@ else
             echo "(./configure && make), or re-run with --skip-testdata." >&2
             exit 1
         fi
+        GENG="$(find_geng)"
+        if [ -z "$GENG" ]; then
+            echo "geng still not on PATH after installation." >&2
+            exit 1
+        fi
+        echo "using: $GENG"
     fi
 
     log "Python env (pynauty + networkx)"
@@ -81,18 +91,18 @@ else
 
     log "Regenerating test_data/*.g6 (geng — exact match verified against original corpora)"
     mkdir -p test_data
-    geng 9 test_data/all_9.g6
-    geng -b 10 test_data/bipartite_10.g6
-    geng -c 10 test_data/connected_10.g6
-    geng -d3D3 10 test_data/cubic_10.g6
-    geng -t 11 test_data/triangle_free_11.g6
-    geng -P 9 test_data/perfect_9.g6
-    geng -T 9 test_data/chordal_9.g6
-    geng -F 9 test_data/clawfree_9.g6
-    geng -k 9 test_data/k4free_9.g6
-    geng -C 9 test_data/biconnected_9.g6
-    geng -d4D4 10 test_data/regular4_10.g6
-    geng -S 10 test_data/split_10.g6
+    "$GENG" 9 test_data/all_9.g6
+    "$GENG" -b 10 test_data/bipartite_10.g6
+    "$GENG" -c 10 test_data/connected_10.g6
+    "$GENG" -d3D3 10 test_data/cubic_10.g6
+    "$GENG" -t 11 test_data/triangle_free_11.g6
+    "$GENG" -P 9 test_data/perfect_9.g6
+    "$GENG" -T 9 test_data/chordal_9.g6
+    "$GENG" -F 9 test_data/clawfree_9.g6
+    "$GENG" -k 9 test_data/k4free_9.g6
+    "$GENG" -C 9 test_data/biconnected_9.g6
+    "$GENG" -d4D4 10 test_data/regular4_10.g6
+    "$GENG" -S 10 test_data/split_10.g6
 
     log "Regenerating test_data/large_*.g6 (networkx: word-boundary sizes 63-513)"
     "$VENV/bin/python3" tools/gen_large_g6.py
