@@ -20,6 +20,11 @@ todo.txt
 /.venv-testdata/
 
 # Python bindings (bindings/python) build artifacts
+# repro/ keeps the measurement data and the scripts; the PNG previews are
+# regenerated from them by repro/plot_figures.py (the PDFs the paper includes
+# are kept).
+/repro/*.png
+
 bindings/python/.venv/
 bindings/python/python/graphcanon/*.so
 bindings/python/python/graphcanon/__pycache__/
