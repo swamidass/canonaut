@@ -1,4 +1,4 @@
-use crate::bit_ops::BIT_USIZE;
+use crate::bit_ops::{BIT_USIZE, W, WMASK, WSHIFT};
 use crate::bit_ops::WORDSIZE;
 use crate::io::OutputStream;
 use crate::refine::GraphContext;
@@ -66,23 +66,23 @@ fn permute_set_two_words(set1: &[usize], set2: &mut [usize], permutation: &[u32]
         source_word0 &= !(1usize << (usize::BITS as usize - 1 - bit_index));
         // SAFETY: bit_index < 64 < n = permutation.len().
         let mapped_bit_position = unsafe { *permutation.get_unchecked(bit_index) } as usize;
-        if mapped_bit_position < 64 {
-            permuted_word0 |= 1usize << (63 - mapped_bit_position);
+        if mapped_bit_position < W {
+            permuted_word0 |= 1usize << (WMASK - mapped_bit_position);
         } else {
-            permuted_word1 |= 1usize << (127 - mapped_bit_position);
+            permuted_word1 |= 1usize << (2 * W - 1 - mapped_bit_position);
         }
     }
     let mut source_word1 = unsafe { *set1.get_unchecked(1) };
     while source_word1 != 0 {
         let bit_index_in_word1 = source_word1.leading_zeros() as usize;
         source_word1 &= !(1usize << (usize::BITS as usize - 1 - bit_index_in_word1));
-        let source_bit_position = 64 + bit_index_in_word1;
+        let source_bit_position = W + bit_index_in_word1;
         // SAFETY: source_bit_position < 128 = n.
         let mapped_bit_position = unsafe { *permutation.get_unchecked(source_bit_position) } as usize;
-        if mapped_bit_position < 64 {
-            permuted_word0 |= 1usize << (63 - mapped_bit_position);
+        if mapped_bit_position < W {
+            permuted_word0 |= 1usize << (WMASK - mapped_bit_position);
         } else {
-            permuted_word1 |= 1usize << (127 - mapped_bit_position);
+            permuted_word1 |= 1usize << (2 * W - 1 - mapped_bit_position);
         }
     }
     // SAFETY: caller guarantees set2.len() >= 2.
@@ -117,12 +117,12 @@ fn permute_set_multiword(
             current_set_word &= !(1usize << (usize::BITS as usize - 1 - bit_index));
             // SAFETY: source_word_index*64 + bit_index < words_per_vertex*64, within permutation.len().
             let target_bit_position =
-                unsafe { *permutation.get_unchecked((source_word_index << 6) + bit_index) } as usize;
-            let target_word_index = target_bit_position >> 6;
-            let target_bit_in_word = target_bit_position & 63;
+                unsafe { *permutation.get_unchecked((source_word_index << WSHIFT) + bit_index) } as usize;
+            let target_word_index = target_bit_position >> WSHIFT;
+            let target_bit_in_word = target_bit_position & WMASK;
             // SAFETY: target_word_index < word_count since target_bit_position < n <= word_count*64.
             unsafe {
-                *set2.get_unchecked_mut(target_word_index) |= 1usize << (63 - target_bit_in_word);
+                *set2.get_unchecked_mut(target_word_index) |= 1usize << (WMASK - target_bit_in_word);
             }
         }
     }
@@ -203,14 +203,14 @@ pub fn fmperm_safe(
     fixed_points[..word_count].fill(0);
     min_cycle_representatives[..word_count].fill(0);
 
-    if vertex_count <= 64 {
+    if vertex_count as usize <= W {
         // Avoid heap allocation for the common word_count=1 case
         let mut visited: u64 = 0;
         for vertex_index in 0..vertex_count as usize {
             let mapped_vertex = unsafe { *permutation.get_unchecked(vertex_index) } as usize;
             if mapped_vertex == vertex_index {
-                unsafe { *fixed_points.get_unchecked_mut(0) |= BIT_USIZE[vertex_index & 63] };
-                unsafe { *min_cycle_representatives.get_unchecked_mut(0) |= BIT_USIZE[vertex_index & 63] };
+                unsafe { *fixed_points.get_unchecked_mut(0) |= BIT_USIZE[vertex_index & WMASK] };
+                unsafe { *min_cycle_representatives.get_unchecked_mut(0) |= BIT_USIZE[vertex_index & WMASK] };
             } else if (visited >> vertex_index) & 1 == 0 {
                 let mut cycle_cursor = vertex_index;
                 loop {
@@ -221,7 +221,7 @@ pub fn fmperm_safe(
                     }
                 }
                 unsafe {
-                    *min_cycle_representatives.get_unchecked_mut(0) |= BIT_USIZE[vertex_index & 63]
+                    *min_cycle_representatives.get_unchecked_mut(0) |= BIT_USIZE[vertex_index & WMASK]
                 };
             }
         }
@@ -239,8 +239,8 @@ pub fn fmperm_safe(
             for vertex_index in 0..vertex_count as usize {
                 let mapped_vertex = permutation[vertex_index] as usize;
                 if mapped_vertex == vertex_index {
-                    fixed_points[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
-                    min_cycle_representatives[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
+                    fixed_points[vertex_index >> WSHIFT] |= BIT_USIZE[vertex_index & WMASK];
+                    min_cycle_representatives[vertex_index >> WSHIFT] |= BIT_USIZE[vertex_index & WMASK];
                 } else if !visited[vertex_index] {
                     let mut cycle_cursor = vertex_index;
                     loop {
@@ -250,7 +250,7 @@ pub fn fmperm_safe(
                             break;
                         }
                     }
-                    min_cycle_representatives[vertex_index >> 6] |= BIT_USIZE[vertex_index & 63];
+                    min_cycle_representatives[vertex_index >> WSHIFT] |= BIT_USIZE[vertex_index & WMASK];
                 }
             }
         });
@@ -284,8 +284,8 @@ pub fn mark_partition_fixed_points(
         // SAFETY: vertex_index < vertex_count; lab[vertex_index] < vertex_count ≤ 64 for word_count=1; fixed_points/min_cycle_representatives have word_count=1 word.
         if unsafe { *partition.get_unchecked(vertex_index as usize) } <= level {
             let label_value = unsafe { *lab.get_unchecked(vertex_index as usize) };
-            let word_index = (label_value >> 6) as usize;
-            let bit_mask = BIT_USIZE[(label_value & 0x3f) as usize];
+            let word_index = (label_value >> WSHIFT) as usize;
+            let bit_mask = BIT_USIZE[label_value as usize & WMASK];
             unsafe { *fixed_points.get_unchecked_mut(word_index) |= bit_mask };
             unsafe { *min_cycle_representatives.get_unchecked_mut(word_index) |= bit_mask };
         } else {
@@ -300,10 +300,10 @@ pub fn mark_partition_fixed_points(
                     break;
                 }
             }
-            let word_index = (min_label_in_cell >> 6) as usize;
+            let word_index = (min_label_in_cell >> WSHIFT) as usize;
             unsafe {
                 *min_cycle_representatives.get_unchecked_mut(word_index) |=
-                    BIT_USIZE[(min_label_in_cell & 0x3f) as usize]
+                    BIT_USIZE[min_label_in_cell as usize & WMASK]
             };
         }
         vertex_index += 1;

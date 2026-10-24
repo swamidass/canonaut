@@ -1,3 +1,4 @@
+use crate::bit_ops::{W, WMASK, WSHIFT};
 use crate::support::permute_set;
 use crate::search::canonicalize;
 use crate::simd_ops::{and_popcount, or_reduce_masked};
@@ -152,11 +153,11 @@ fn is_automorphism_two_words(
         // Undirected: check only j > vertex (upper triangle).
         // In MSB-0 encoding, bit j in word 0 is column j (0-63); word 1 is columns 64-127.
         let (mut remaining_word0, mut remaining_word1) = if !is_directed_graph {
-            if vertex < 64 {
-                (row_word0 & if vertex + 1 < 64 { usize::MAX >> (vertex + 1) } else { 0 }, row_word1)
+            if vertex < W {
+                (row_word0 & if vertex + 1 < W { usize::MAX >> (vertex + 1) } else { 0 }, row_word1)
             } else {
-                let bit_in_word1 = vertex - 64;
-                (0, row_word1 & if bit_in_word1 + 1 < 64 { usize::MAX >> (bit_in_word1 + 1) } else { 0 })
+                let bit_in_word1 = vertex - W;
+                (0, row_word1 & if bit_in_word1 + 1 < W { usize::MAX >> (bit_in_word1 + 1) } else { 0 })
             }
         } else {
             (row_word0, row_word1)
@@ -169,10 +170,10 @@ fn is_automorphism_two_words(
             // SAFETY: column < 64 < n = permutation.len()
             let mapped_column = unsafe { *permutation.get_unchecked(column) } as usize;
             // Test bit mapped_column in mapped vertex's row (MSB-0): word mapped_column>>6, bit 63-(mapped_column&63)
-            let (selected_word, selected_bit) = if mapped_column < 64 {
+            let (selected_word, selected_bit) = if mapped_column < W {
                 (mapped_word0, mapped_column)
             } else {
-                (mapped_word1, mapped_column - 64)
+                (mapped_word1, mapped_column - W)
             };
             if selected_word >> (usize::BITS as usize - 1 - selected_bit) & 1 == 0 {
                 return false;
@@ -182,14 +183,14 @@ fn is_automorphism_two_words(
         // Iterate bits in word 1 (columns 64..127)
         while remaining_word1 != 0 {
             let bit_in_word1 = remaining_word1.leading_zeros() as usize;
-            let column = 64 + bit_in_word1;
+            let column = W + bit_in_word1;
             remaining_word1 &= !(1usize << (usize::BITS as usize - 1 - bit_in_word1));
             // SAFETY: column < 128 = n
             let mapped_column = unsafe { *permutation.get_unchecked(column) } as usize;
-            let (selected_word, selected_bit) = if mapped_column < 64 {
+            let (selected_word, selected_bit) = if mapped_column < W {
                 (mapped_word0, mapped_column)
             } else {
-                (mapped_word1, mapped_column - 64)
+                (mapped_word1, mapped_column - W)
             };
             if selected_word >> (usize::BITS as usize - 1 - selected_bit) & 1 == 0 {
                 return false;
@@ -394,8 +395,8 @@ pub fn refine(
                         // Direct MSB-0 bit test — avoids is_bit_set dispatch overhead.
                         // SAFETY: candidate_label < vertex_count ≤ pivot_row.len()*64, so word_idx in bounds.
                         let candidate_vertex = candidate_label as usize;
-                        if unsafe { *pivot_row.get_unchecked(candidate_vertex >> 6) }
-                            >> (usize::BITS - 1 - (candidate_vertex & 63) as u32)
+                        if unsafe { *pivot_row.get_unchecked(candidate_vertex >> WSHIFT) }
+                            >> (usize::BITS - 1 - (candidate_vertex & WMASK) as u32)
                             & 1 != 0
                         {
                             cell_split_low += 1;
@@ -580,7 +581,7 @@ pub fn refine1(
     macro_rules! a_unset  { ($x:expr) => { *active_cell_word &= !(1usize << (usize::BITS - 1 - $x as u32)) } }
     // next bit in active_cell_word at or after `pos+1` (MSB-0); returns -1 if none.
     macro_rules! a_next   { ($pos:expr) => {{
-        let masked = *active_cell_word & if $pos < 63 { usize::MAX >> ($pos as u32 + 1) } else { 0 };
+        let masked = *active_cell_word & if ($pos as usize) < WMASK { usize::MAX >> ($pos as u32 + 1) } else { 0 };
         if masked != 0 { masked.leading_zeros() as i32 } else { -1 }
     }};}
     macro_rules! a_first  { () => {{
